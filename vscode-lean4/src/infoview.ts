@@ -120,6 +120,11 @@ export class InfoProvider implements Disposable {
                 this.client.client.protocol2CodeConverter.asRange(show.selection)
             );
         },
+        uriOfFilePath: async (path) => {
+            const pathUri = this.client.client.protocol2CodeConverter.asUri(path);
+            return this.client.client.code2ProtocolConverter.asUri(
+                this.webviewPanel.webview.asWebviewUri(pathUri));
+        },
     };
 
     constructor(private client: LeanClient, private leanDocs: DocumentSelector, private context: ExtensionContext) {

@@ -1,0 +1,100 @@
+import * as React from "react";
+import { Location, TextDocumentPositionParams } from "vscode-languageserver-protocol";
+
+import { EditorContext } from "./contexts";
+import { DocumentPosition, useEvent, useLogState } from "./util";
+
+type RpcValue = { whole: string } | { ptr: number } 
+
+interface RpcTypedValue {
+    val: RpcValue
+    type: string
+}
+
+type RpcCallKind = 'whole' | 'ptr' | 'io'
+interface LeanRpcRequest extends TextDocumentPositionParams {
+    method : string
+    args : RpcTypedValue[]
+    retKind : RpcCallKind
+}
+
+interface LeanRpcResponse {
+    value : RpcValue
+}
+
+export function RefineDemo() {
+	const ec = React.useContext(EditorContext);
+    const [curLoc, setCurLoc] = React.useState<Location>(ec.events.changedCursorLocation.current!);
+    useEvent(ec.events.changedCursorLocation, setCurLoc, []);
+
+    const curPos: DocumentPosition = { uri: curLoc.uri, ...curLoc.range.start };
+
+    /*const [wasmMod, setWasmMod] = React.useState<any | undefined>(undefined);
+    React.useEffect(() => {
+        ec.api.sendClientRequest('$/lean/syntaxRefiner/fetchCode', DocumentPosition.toTdpp(curPos))
+        .then((val: SyntaxRefinerCode) => {
+            let js = atob(val.js);
+            let wasm = atob(val.wasm);
+            debugger;
+
+            });
+    }, []);*/
+
+    const [log, outputLog] = useLogState();
+    /*const [goals, setGoals] = React.useState<SyntaxGoal[]>([]);
+    React.useEffect(() => {
+        ec.api.sendClientRequest('$/lean/syntaxGoal', DocumentPosition.toTdpp(curPos))
+        .then((val: SyntaxGoal[]) => {
+            if (val) setGoals(val);
+        });
+    }, [curLoc]);*/
+
+    React.useEffect(() => {
+        (async () => {
+            try {
+                let params : LeanRpcRequest = {
+                    ...DocumentPosition.toTdpp(curPos),
+                    method : "ToString.toString",
+                    args : [
+                        { val : { whole: "1337" },
+                          type : "Nat" }
+                    ],
+                    retKind: 'ptr'
+                };
+                const strPtr: LeanRpcResponse | undefined = await ec.api.sendClientRequest('$/lean/rpc', params);
+                if (!strPtr) return;
+                if (!strPtr.value.ptr) return;
+                let params2 : LeanRpcRequest = {
+                    ...DocumentPosition.toTdpp(curPos),
+                    method : "id",
+                    args : [ 
+                        { val : { ptr: strPtr.value.ptr },
+                          type : "String" }
+                    ],
+                    retKind: 'whole'
+                };
+                const strPtr2 = await ec.api.sendClientRequest('$/lean/rpc', params2);
+                if (!strPtr2) return;
+                outputLog(strPtr2.value.whole)
+                let params3 : LeanRpcRequest = {
+                    ...DocumentPosition.toTdpp(curPos),
+                    method : "pure",
+                    args : [ 
+                        { val : { ptr: strPtr.value.ptr },
+                          type : "String" }
+                    ],
+                    retKind: 'io'
+                };
+                const strPtr3 = await ec.api.sendClientRequest('$/lean/rpc', params3);
+                if (!strPtr3) return;
+                outputLog(strPtr3.value.whole)
+            } catch (ex) { outputLog("Error: "); outputLog(ex); }
+        })();
+    }, [curPos.line, curPos.character]);
+
+    //let goalEls = goals.map (g => <RefinableGoal key={g.goal} goal={g} />);
+    return <pre>
+        Log:
+        {log}
+    </pre>;
+}

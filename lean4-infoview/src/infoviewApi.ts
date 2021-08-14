@@ -1,4 +1,4 @@
-import { Location, ShowDocumentParams, TextDocumentPositionParams } from "vscode-languageserver-protocol"
+import { Location, ShowDocumentParams, TextDocumentPositionParams, URI } from "vscode-languageserver-protocol"
 
 export interface EditorFsApi {
   stat(path: string): Promise<any>;
@@ -53,6 +53,13 @@ export interface EditorApi {
 
   /** Highlight a range in a document in the editor. */
   showDocument(show: ShowDocumentParams): Promise<void>;
+
+  /**
+   * Translate the specified file `path` to a URI which the infoview can then make
+   * a GET request against to retrieve the file, or a HEAD request to read its metadata.
+   * Note that this effectively requires the hosting editor to either host a local HTTP
+   * server or handle the requests with a `ServiceWorker`. */
+  uriOfFilePath(path: URI): Promise<URI>;
 }
 
 export interface InfoviewTacticStateFilter {
