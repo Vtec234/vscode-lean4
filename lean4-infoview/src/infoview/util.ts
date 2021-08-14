@@ -93,11 +93,11 @@ export function useServerNotificationEffect<T>(method: string, f: (params: T) =>
  * Returns the same tuple as `setState` such that whenever a server notification with `method`
  * arrives at the editor, the state will be updated according to `f`.
  */
-export function useServerNotificationState<S, T>(method: string, initial: S, f: (state: S, params: T) => S, deps?: React.DependencyList): [S, React.Dispatch<React.SetStateAction<S>>] {
+export function useServerNotificationState<S, T>(method: string, initial: S, f: (params: T) => Promise<(state: S) => S>, deps?: React.DependencyList): [S, React.Dispatch<React.SetStateAction<S>>] {
   const [s, setS] = React.useState<S>(initial);
 
   useServerNotificationEffect(method, (params: T) => {
-    setS(state => f(state, params));
+    f(params).then(g => setS(g))
   }, deps);
 
   return [s, setS];
