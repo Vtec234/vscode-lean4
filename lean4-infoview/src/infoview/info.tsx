@@ -4,10 +4,11 @@ import { Location } from 'vscode-languageserver-protocol';
 import { Goals as GoalsUi, Goal as GoalUi, goalsToString } from './goals';
 import { basename, DocumentPosition, RangeHelpers, useEvent, usePausableState } from './util';
 import { Details } from './collapsing';
-import { EditorContext, ProgressContext, RpcContext, VersionContext } from './contexts';
+import { updatePlainGoals, updateTermGoal } from './goalCompat';
+import { EditorContext, HtmlVisContext, LogContext, ProgressContext, RpcContext, VersionContext } from './contexts';
 import { MessagesAtFile, useMessagesFor } from './messages';
 import { getInteractiveGoals, getInteractiveTermGoal, InteractiveDiagnostic, InteractiveGoal, InteractiveGoals } from './rpcInterface';
-import { updatePlainGoals, updateTermGoal } from './goalCompat';
+import { Logger } from './log';
 
 type InfoStatus = 'loading' | 'updating' | 'error' | 'ready';
 type InfoKind = 'cursor' | 'pin';
@@ -115,14 +116,26 @@ export function InfoDisplay(props0: InfoDisplayProps) {
         setPaused(isPaused => !isPaused);
     });
 
-    const nothingToShow = !error && !goals && !termGoal && messages.length === 0;
 
     const hasError = status === 'error' && error;
     const hasGoals = status !== 'error' && goals;
     const hasTermGoal = status !== 'error' && termGoal;
     const hasMessages = status !== 'error' && messages.length !== 0;
 
-    return (
+    const [html, setHtml] = React.useState<string>('')
+    const hasHtml = html !== ''
+
+    const [log, setLog] = React.useState<Logger>(new Logger(() => {}))
+    const upFn = () => setLog(l => {
+        const l2 = new Logger(upFn)
+        l2.log = l.log
+        return l2
+    })
+    log.updateUi = upFn
+
+    const nothingToShow = !error && !goals && !termGoal && messages.length === 0 && !hasHtml
+
+    const ret = (
     <Details initiallyOpen>
         <InfoStatusBar {...props} triggerUpdate={triggerDisplayUpdate} isPaused={isPaused} setPaused={setPaused} copyGoalToComment={copyGoalToComment} />
         <div className="ml1">
@@ -161,6 +174,22 @@ export function InfoDisplay(props0: InfoDisplayProps) {
                     </div>
                 </Details>
             </div>
+            <div style={{display: hasHtml ? 'block' : 'none'}}>
+                <Details initiallyOpen>
+                    <summary className="mv2 pointer">
+                        Slide Deck (?!)
+                    </summary>
+                    <div className="f3 ml1" dangerouslySetInnerHTML={{__html: html}} />
+                </Details>
+            </div>
+            <div>
+                <Details initiallyOpen={false}>
+                    <summary className="mv2 pointer" onClick={() => setLog(new Logger(upFn))}>
+                        Log
+                    </summary>
+                    <pre className="f5 ml1">{log.log.persistentLog}</pre>
+                </Details>
+            </div>
             {nothingToShow && (
                 isPaused ?
                     <span>Updating is paused. <a className="link pointer dim" onClick={e => { e.preventDefault(); triggerDisplayUpdate(); }}>Refresh</a> or <a className="link pointer dim" onClick={e => { e.preventDefault(); setPaused(false); }}>resume updating</a> to see information.</span> :
@@ -168,6 +197,12 @@ export function InfoDisplay(props0: InfoDisplayProps) {
         </div>
     </Details>
     );
+
+    return <HtmlVisContext.Provider value={setHtml}>
+        <LogContext.Provider value={log}>
+            {ret}
+        </LogContext.Provider>
+    </HtmlVisContext.Provider>;
 }
 
 function useIsProcessingAt(p: DocumentPosition): boolean {

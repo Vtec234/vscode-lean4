@@ -8,6 +8,7 @@
 import { DocumentPosition } from './util'
 import { RpcSessions } from './rpcSessions'
 import { RpcPtr, LeanDiagnostic } from '../lspTypes'
+import { Logger } from './log'
 
 export type TaggedText<T> =
     { text: string } |
@@ -42,6 +43,24 @@ export interface CodeToken {
 export type CodeWithInfos = TaggedText<CodeToken>
 export type ExprWithCtx = RpcPtr<'ExprWithCtx'>
 
+export type HtmlAttribute = [string, string]
+
+export type Html =
+  { element: [string, HtmlAttribute[], Html[]] } |
+  { text: string }
+
+export function Html_toRawString(h : Html): string {
+  if ('text' in h) return h.text
+  else if ('element' in h) {
+    const tag = h.element[0]
+    const attrs = h.element[1].map(([name, val]) => `${name}="${val}"`).join(' ')
+    const cs = h.element[2].map(Html_toRawString).join('')
+
+    return `<${tag} ${attrs}>${cs}</${tag}>`
+  }
+  else throw `unexpected variant ${h} of Html`
+}
+
 export interface InfoPopup {
   type?: CodeWithInfos
   exprExplicit?: CodeWithInfos
@@ -57,9 +76,24 @@ function InfoPopup_registerRefs(rs: RpcSessions, pos: DocumentPosition, ip: Info
     if (ip.exprExplicit) CodeWithInfos_registerRefs(rs, pos, ip.exprExplicit)
 }
 
-export async function InteractiveDiagnostics_infoToInteractive(rs: RpcSessions, pos: DocumentPosition, info: InfoWithCtx): Promise<InfoPopup | undefined> {
+export async function InteractiveDiagnostics_infoToInteractive(rs: RpcSessions, pos: DocumentPosition, info: InfoWithCtx, log: Logger | undefined = undefined): Promise<InfoPopup | undefined> {
     const ret = await rs.call<InfoPopup>(pos, 'Lean.Widget.InteractiveDiagnostics.infoToInteractive', info)
+    const ppRet = JSON.stringify(ret)
+    const shortPpRet = ppRet.slice(0,32)
+    log?.append(`-> infoToInteractive(${JSON.stringify(info)})`)
+    log?.append(`<- ${shortPpRet}${ppRet.length > 32 && ' ...'}`)
+    log?.updateUi()
     if (ret) InfoPopup_registerRefs(rs, pos, ret)
+    return ret
+}
+
+export async function infoToUserHtml(rs: RpcSessions, pos: DocumentPosition, info: InfoWithCtx, log: Logger | undefined = undefined): Promise<Html | undefined> {
+    const ret = await rs.call<Html>(pos, 'Lean.Widget.infoToUserHtml', info)
+    const ppRet = JSON.stringify(ret)
+    const shortPpRet = ppRet.slice(0,32)
+    log?.append(`-> infoToUserHtml(${JSON.stringify(info)})`)
+    log?.append(`<- ${shortPpRet}${ppRet.length > 32 ? ' ...' : ''}`)
+    log?.updateUi()
     return ret
 }
 

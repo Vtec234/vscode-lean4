@@ -4,9 +4,9 @@ import 'tippy.js/dist/tippy.css'
 import 'tippy.js/themes/light-border.css'
 import { default as Tippy, TippyProps } from '@tippyjs/react'
 
-import { RpcContext } from "./contexts"
+import { HtmlVisContext, LogContext, RpcContext } from "./contexts"
 import { DocumentPosition } from './util'
-import { CodeToken, CodeWithInfos, InfoPopup, InfoWithCtx, InteractiveDiagnostics_infoToInteractive, TaggedText } from './rpcInterface'
+import { CodeToken, CodeWithInfos, Html, Html_toRawString, InfoPopup, infoToUserHtml, InfoWithCtx, InteractiveDiagnostics_infoToInteractive, TaggedText } from './rpcInterface'
 
 export interface InteractiveTextComponentProps<T> {
   pos: DocumentPosition
@@ -65,18 +65,24 @@ const LazyTippy = React.forwardRef<HTMLElement, TippyProps>((props, ref) => {
 function TypePopupContents({pos, info, redrawTooltip}: {pos: DocumentPosition, info: InfoWithCtx, redrawTooltip: () => void}) {
   const rs = React.useContext(RpcContext)
   // When `err` is defined we show the error,
-  // otherwise if `ip` is defined we show its contents,
+  // otherwise if `contents` are defined we show those,
   // otherwise a 'loading' message.
-  const [ip, setIp] = React.useState<InfoPopup>()
+  const [contents, setContents] = React.useState<[InfoPopup, Html | undefined]>()
   const [err, setErr] = React.useState<string>()
+  const setHtmlVis = React.useContext(HtmlVisContext)
+  const log = React.useContext(LogContext)
 
   React.useEffect(() => {
-    InteractiveDiagnostics_infoToInteractive(rs, pos, info).then(val => {
-      if (val) {
+    Promise.all([
+      InteractiveDiagnostics_infoToInteractive(rs, pos, info, log),
+      infoToUserHtml(rs, pos, info, log)])
+    .then(([ip, html]) => {
+      if (ip) {
         setErr(undefined)
-        setIp(val)
+        setContents([ip, html])
         // We let Tippy.js know that the tooltip should be re-rendered,
         // since it has new contents.
+        if (html) setHtmlVis(Html_toRawString(html))
         redrawTooltip()
       }
     }).catch(ex => {
@@ -90,11 +96,14 @@ function TypePopupContents({pos, info, redrawTooltip}: {pos: DocumentPosition, i
   if (err)
     return <>Error: {err}</>
 
-  if (ip) {
+  if (contents) {
+    const [ip, html] = contents
     return <>
       {ip.exprExplicit && <InteractiveCode pos={pos} fmt={ip.exprExplicit} />} : {ip.type && <InteractiveCode pos={pos} fmt={ip.type} />}
       {ip.doc && <hr />}
       {ip.doc && ip.doc} {/* TODO markdown */}
+      {/* {html && <hr />} */}
+      {/* {html && <div dangerouslySetInnerHTML={{__html: Html_toRawString(html)}}></div>} */}
     </>
   } else return <>Loading..</>
 }

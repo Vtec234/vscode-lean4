@@ -64,15 +64,15 @@ html,body {
 
 /* Headers for infoview */
 
-h1 {
-    display: block;
-    margin-bottom: 1ex;
-    margin-top: 1ex;
-    border-bottom: 1px solid;
-    padding: 0px;
-    font-weight: normal;
-    font-size: 100%;
-}
+/* h1 { */
+    /* display: block; */
+    /* margin-bottom: 1ex; */
+    /* margin-top: 1ex; */
+    /* border-bottom: 1px solid; */
+    /* padding: 0px; */
+    /* font-weight: normal; */
+    /* font-size: 100%; */
+/* } */
 
 .collapsible-header {
     border-bottom-color: black;
