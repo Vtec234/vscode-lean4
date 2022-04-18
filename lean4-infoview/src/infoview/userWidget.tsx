@@ -85,27 +85,21 @@ async function getWidget(rc : RpcSessions, pos : DocumentPosition) : Promise<und
     return {...widget, component}
 }
 
-export function UserWidget(props: any) {
-    const ec = React.useContext(EditorContext);
+interface UserWidgetProps {
+    pos: DocumentPosition
+}
+
+export function UserWidget(props: UserWidgetProps) {
     const rs = React.useContext(RpcContext);
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const curLoc = useEventResult<Location | undefined>(
-        ec.events.changedCursorLocation,
-        // @ts-ignore
-        (loc, prev) => loc ?? prev
-    )
-    if (!curLoc) {
+    if (!props.pos) {
         return <>Waiting for a location.</>
     }
-    const curPos: DocumentPosition = { uri: curLoc.uri, ...curLoc.range.start };
-    const [status, result, error] = useAsync(() => getWidget(rs, curPos), [curPos.uri, curPos.line, curPos.character])
-
+    const [status, result, error] = useAsync(() => getWidget(rs, props.pos), [props.pos.uri, props.pos.line, props.pos.character])
 
     const widgetId = result?.id
     const ps = result?.props
     const component = result?.component
-
 
     return (
         <React.Suspense fallback={`Loading widget: ${widgetId} ${status}.`}>

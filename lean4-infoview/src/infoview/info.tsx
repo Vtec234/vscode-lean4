@@ -8,6 +8,7 @@ import { EditorContext, ProgressContext, RpcContext, VersionContext } from './co
 import { MessagesList, useMessagesFor } from './messages';
 import { getInteractiveGoals, getInteractiveTermGoal, InteractiveDiagnostic, InteractiveGoal, InteractiveGoals } from './rpcInterface';
 import { updatePlainGoals, updateTermGoal } from './goalCompat';
+import { UserWidget } from './userWidget';
 
 type InfoStatus = 'loading' | 'updating' | 'error' | 'ready';
 type InfoKind = 'cursor' | 'pin';
@@ -162,6 +163,7 @@ export function InfoDisplay(props0: InfoDisplayProps) {
                     </div>
                 </Details>
             </div>
+            <UserWidget pos={props.pos}/>
             {nothingToShow && (
                 isPaused ?
                     <span>Updating is paused.
