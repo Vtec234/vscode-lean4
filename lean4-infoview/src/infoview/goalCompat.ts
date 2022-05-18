@@ -1,5 +1,5 @@
 import { PlainGoal, PlainTermGoal } from '@lean4/infoview-api';
-import { InteractiveGoal, InteractiveGoals, InteractiveHypothesis } from './rpcInterface';
+import * as Rpc from './rpcInterface';
 
 function getGoals(plainGoals: PlainGoal): string[] {
     if (plainGoals.goals) return plainGoals.goals
@@ -16,12 +16,12 @@ function getGoals(plainGoals: PlainGoal): string[] {
     return goals;
 }
 
-function transformGoalToInteractive(g: string): InteractiveGoal {
+function transformGoalToInteractive(g: string): Rpc.InteractiveGoal {
     // this regex splits the goal state into (possibly multi-line) hypothesis and goal blocks
     // by keeping indented lines with the most recent non-indented line
     const parts = (g.match(/(^(?!  ).*\n?(  .*\n?)*)/mg) ?? []).map(line => line.trim())
     let userName
-    const hyps: InteractiveHypothesis[] = []
+    const hyps: Rpc.InteractiveHypothesis[] = []
     let type = ''
     for (const p of parts) {
         if (p.match(/^(⊢) /mg)) {
@@ -30,7 +30,7 @@ function transformGoalToInteractive(g: string): InteractiveGoal {
             userName = p.slice(5)
         } else if (p.match(/^([^:\n< ][^:\n⊢{[(⦃]*) :/mg)) {
             const ss = p.split(':')
-            const hyp: InteractiveHypothesis = {
+            const hyp: Rpc.InteractiveHypothesis = {
                 names: ss[0].split(' ')
                     .map(s => s.trim())
                     .filter(s => s.length !== 0),
@@ -43,13 +43,13 @@ function transformGoalToInteractive(g: string): InteractiveGoal {
     return { hyps, type: { text: type }, userName }
 }
 
-export function updatePlainGoals(g: PlainGoal): InteractiveGoals {
+export function updatePlainGoals(g: PlainGoal): Rpc.InteractiveGoals {
     const gs = getGoals(g)
     return {
         goals: gs.map(transformGoalToInteractive)
     }
 }
 
-export function updateTermGoal(g: PlainTermGoal): InteractiveGoal {
+export function updateTermGoal(g: PlainTermGoal): Rpc.InteractiveGoal {
     return transformGoalToInteractive(g.goal)
 }

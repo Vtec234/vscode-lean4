@@ -11,12 +11,13 @@ import * as React from 'react'
 import { RpcContext } from './contexts'
 import { Goal } from './goals'
 import { InteractiveCode, InteractiveTaggedText, InteractiveTagProps, InteractiveTextComponentProps } from './interactiveCode'
-import { InteractiveDiagnostics_msgToInteractive, MessageData, MsgEmbed, TaggedText } from './rpcInterface'
+import * as Rpc from './rpcInterface'
+import { TaggedText } from './rpcInterface'
 import { DocumentPosition } from './util'
 
-function CollapsibleTrace({pos, col, cls, msg}: {pos: DocumentPosition, col: number, cls: string, msg: MessageData}) {
+function CollapsibleTrace({pos, col, cls, msg}: {pos: DocumentPosition, col: number, cls: string, msg: Rpc.MessageData}) {
     const rs = React.useContext(RpcContext)
-    const [tt, setTt] = React.useState<TaggedText<MsgEmbed> | undefined>(undefined)
+    const [tt, setTt] = React.useState<TaggedText<Rpc.MsgEmbed> | undefined>(undefined)
 
     let inner
     if (tt) {
@@ -32,14 +33,14 @@ function CollapsibleTrace({pos, col, cls, msg}: {pos: DocumentPosition, col: num
         inner =
             <span className="underline-hover pointer"
                 onClick={ev => {
-                    void InteractiveDiagnostics_msgToInteractive(rs, pos, { msg, indent: col }).then(t => t && setTt(t))
+                    void Rpc.msgToInteractive(rs, pos, msg, col).then(t => t && setTt(t))
                     ev.stopPropagation()
                 }}>[{cls.slice(1)}] &gt;</span>
     }
     return inner
 }
 
-function InteractiveMessageTag({pos, tag: embed, fmt}: InteractiveTagProps<MsgEmbed>): JSX.Element {
+function InteractiveMessageTag({pos, tag: embed, fmt}: InteractiveTagProps<Rpc.MsgEmbed>): JSX.Element {
     if ('expr' in embed)
         return <InteractiveCode pos={pos} fmt={embed.expr} />
     else if ('goal' in embed)
@@ -50,6 +51,6 @@ function InteractiveMessageTag({pos, tag: embed, fmt}: InteractiveTagProps<MsgEm
         throw new Error(`malformed 'MsgEmbed': '${embed}'`)
 }
 
-export function InteractiveMessage({pos, fmt}: InteractiveTextComponentProps<MsgEmbed>) {
+export function InteractiveMessage({pos, fmt}: InteractiveTextComponentProps<Rpc.MsgEmbed>) {
     return InteractiveTaggedText({pos, fmt, InnerTagUi: InteractiveMessageTag})
 }

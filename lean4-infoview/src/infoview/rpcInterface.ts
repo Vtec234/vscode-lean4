@@ -16,12 +16,6 @@ export type TaggedText<T> =
     { append: TaggedText<T>[] } |
     { tag: [T, TaggedText<T>] }
 
-function TaggedText_mapRefs<T>(tt: TaggedText<T>, f: (_: T) => void): void {
-    const go = (t: TaggedText<T>) => TaggedText_mapRefs(t, f)
-    if ('append' in tt) { for (const a of tt.append) go(a) }
-    else if ('tag' in tt) { f(tt.tag[0]); go(tt.tag[1]) }
-}
-
 export function TaggedText_stripTags<T>(tt: TaggedText<T>): string {
     const go = (t: TaggedText<T>): string => {
         if ('append' in t)
@@ -33,6 +27,12 @@ export function TaggedText_stripTags<T>(tt: TaggedText<T>): string {
         return ''
     }
     return go(tt)
+}
+
+function TaggedText_mapRefs<T>(tt: TaggedText<T>, f: (_: T) => void): void {
+    const go = (t: TaggedText<T>) => TaggedText_mapRefs(t, f)
+    if ('append' in tt) { for (const a of tt.append) go(a) }
+    else if ('tag' in tt) { f(tt.tag[0]); go(tt.tag[1]) }
 }
 
 export type InfoWithCtx = RpcPtr<'InfoWithCtx'>
@@ -60,7 +60,7 @@ function InfoPopup_registerRefs(rs: RpcSessions, pos: DocumentPosition, ip: Info
     if (ip.exprExplicit) CodeWithInfos_registerRefs(rs, pos, ip.exprExplicit)
 }
 
-export async function InteractiveDiagnostics_infoToInteractive(rs: RpcSessions, pos: DocumentPosition, info: InfoWithCtx): Promise<InfoPopup | undefined> {
+export async function infoToInteractive(rs: RpcSessions, pos: DocumentPosition, info: InfoWithCtx): Promise<InfoPopup | undefined> {
     const ret = await rs.call<InfoPopup>(pos, 'Lean.Widget.InteractiveDiagnostics.infoToInteractive', info)
     if (ret) InfoPopup_registerRefs(rs, pos, ret)
     return ret
@@ -144,13 +144,13 @@ export async function getInteractiveDiagnostics(rs: RpcSessions, pos: DocumentPo
     return ret
 }
 
-export interface MessageToInteractive {
-    msg: MessageData
-    indent: number
-}
-
-export async function InteractiveDiagnostics_msgToInteractive(rs: RpcSessions, pos: DocumentPosition, msg: MessageToInteractive): Promise<TaggedText<MsgEmbed> | undefined> {
-    const ret = await rs.call<TaggedText<MsgEmbed>>(pos, 'Lean.Widget.InteractiveDiagnostics.msgToInteractive', msg)
+export async function msgToInteractive(rs: RpcSessions, pos: DocumentPosition, msg: MessageData, indent: number): Promise<TaggedText<MsgEmbed> | undefined> {
+    interface MessageToInteractive {
+        msg: MessageData
+        indent: number
+    }
+    const arg : MessageToInteractive = { msg, indent }
+    const ret = await rs.call<TaggedText<MsgEmbed>>(pos, 'Lean.Widget.InteractiveDiagnostics.msgToInteractive', arg)
     if (ret) TaggedMsg_registerRefs(rs, pos, ret)
     return ret
 }

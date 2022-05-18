@@ -2,7 +2,8 @@ import * as React from 'react'
 
 import { EditorContext, RpcContext } from './contexts'
 import { DocumentPosition } from './util'
-import { SubexprInfo, CodeWithInfos, InfoPopup, InfoWithCtx, InteractiveDiagnostics_infoToInteractive, getGoToLocation, TaggedText } from './rpcInterface'
+import * as Rpc from './rpcInterface'
+import { TaggedText } from './rpcInterface'
 import { DetectHoverSpan, HoverState, WithTooltipOnHover } from './tooltips'
 import { Location } from 'vscode-languageserver-protocol'
 
@@ -33,16 +34,16 @@ export function InteractiveTaggedText<T>({pos, fmt, InnerTagUi}: InteractiveTagg
 }
 
 /** Shows `explicitValue : itsType` and a docstring if there is one. */
-function TypePopupContents({pos, info, redrawTooltip}: {pos: DocumentPosition, info: InfoWithCtx, redrawTooltip: () => void}) {
+function TypePopupContents({pos, info, redrawTooltip}: {pos: DocumentPosition, info: Rpc.InfoWithCtx, redrawTooltip: () => void}) {
   const rs = React.useContext(RpcContext)
   // When `err` is defined we show the error,
   // otherwise if `ip` is defined we show its contents,
   // otherwise a 'loading' message.
-  const [ip, setIp] = React.useState<InfoPopup>()
+  const [ip, setIp] = React.useState<Rpc.InfoPopup>()
   const [err, setErr] = React.useState<string>()
 
   React.useEffect(() => {
-    InteractiveDiagnostics_infoToInteractive(rs, pos, info).then(val => {
+    Rpc.infoToInteractive(rs, pos, info).then(val => {
       if (val) {
         setErr(undefined)
         setIp(val)
@@ -70,7 +71,7 @@ function TypePopupContents({pos, info, redrawTooltip}: {pos: DocumentPosition, i
 }
 
 /** Tagged spans can be hovered over to display extra info stored in the associated `SubexprInfo`. */
-function InteractiveCodeTag({pos, tag: ct, fmt}: InteractiveTagProps<SubexprInfo>) {
+function InteractiveCodeTag({pos, tag: ct, fmt}: InteractiveTagProps<Rpc.SubexprInfo>) {
   const mkTooltip = React.useCallback((redrawTooltip: () => void) =>
     <div className="font-code tl pre-wrap">
       <TypePopupContents pos={pos} info={ct.info}
@@ -93,7 +94,7 @@ function InteractiveCodeTag({pos, tag: ct, fmt}: InteractiveTagProps<SubexprInfo
         setHoverState={st => {
           // On ctrl-hover, fetch the go-to location
           if (st === 'ctrlOver') {
-            void getGoToLocation(rs, pos, 'definition', ct.info).then(lnks => {
+            void Rpc.getGoToLocation(rs, pos, 'definition', ct.info).then(lnks => {
               if (lnks !== undefined && lnks.length > 0)
                 setGoToLoc({ uri: lnks[0].targetUri, range: lnks[0].targetSelectionRange })
             }).catch(e => console.error('Error in go-to-definition: ', JSON.stringify(e)))
@@ -110,6 +111,6 @@ function InteractiveCodeTag({pos, tag: ct, fmt}: InteractiveTagProps<SubexprInfo
   )
 }
 
-export function InteractiveCode({pos, fmt}: {pos: DocumentPosition, fmt: CodeWithInfos}) {
+export function InteractiveCode({pos, fmt}: {pos: DocumentPosition, fmt: Rpc.CodeWithInfos}) {
   return InteractiveTaggedText({pos, fmt, InnerTagUi: InteractiveCodeTag})
 }

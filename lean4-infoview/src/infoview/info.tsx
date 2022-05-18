@@ -6,7 +6,7 @@ import { basename, DocumentPosition, RangeHelpers, useEvent, usePausableState } 
 import { Details } from './collapsing';
 import { EditorContext, ProgressContext, RpcContext, VersionContext } from './contexts';
 import { MessagesList, useMessagesFor } from './messages';
-import { getInteractiveGoals, getInteractiveTermGoal, InteractiveDiagnostic, InteractiveGoal, InteractiveGoals } from './rpcInterface';
+import * as Rpc from './rpcInterface';
 import { updatePlainGoals, updateTermGoal } from './goalCompat';
 
 type InfoStatus = 'loading' | 'updating' | 'error' | 'ready';
@@ -75,9 +75,9 @@ export function InfoStatusBar(props: InfoStatusBarProps) {
 interface InfoDisplayProps extends InfoPinnable {
     pos: DocumentPosition;
     status: InfoStatus;
-    messages: InteractiveDiagnostic[];
-    goals?: InteractiveGoals;
-    termGoal?: InteractiveGoal;
+    messages: Rpc.InteractiveDiagnostic[];
+    goals?: Rpc.InteractiveGoals;
+    termGoal?: Rpc.InteractiveGoal;
     error?: string;
     triggerUpdate: () => Promise<void>;
 }
@@ -243,8 +243,8 @@ function InfoAux(props: InfoProps) {
     const pos = props.pos!;
 
     const [status, setStatus] = React.useState<InfoStatus>('loading');
-    const [goals, setGoals] = React.useState<InteractiveGoals>();
-    const [termGoal, setTermGoal] = React.useState<InteractiveGoal>();
+    const [goals, setGoals] = React.useState<Rpc.InteractiveGoals>();
+    const [termGoal, setTermGoal] = React.useState<Rpc.InteractiveGoal>();
     const [error, setError] = React.useState<string>();
 
     const messages = useMessagesFor(pos);
@@ -256,8 +256,8 @@ function InfoAux(props: InfoProps) {
         let allReq
         if (sv?.hasWidgetsV1()) {
             // Start both goal requests before awaiting them.
-            const goalsReq = getInteractiveGoals(rs, pos);
-            const termGoalReq = getInteractiveTermGoal(rs, pos);
+            const goalsReq = Rpc.getInteractiveGoals(rs, pos);
+            const termGoalReq = Rpc.getInteractiveTermGoal(rs, pos);
             allReq = Promise.all([goalsReq, termGoalReq]);
         } else {
             const goalsReq = ec.requestPlainGoal(pos).then(gs => {

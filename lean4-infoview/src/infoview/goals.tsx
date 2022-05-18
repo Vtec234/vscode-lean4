@@ -2,9 +2,10 @@ import * as React from 'react'
 import { DocumentPosition } from './util'
 import { ConfigContext } from './contexts'
 import { InteractiveCode } from './interactiveCode'
-import { InteractiveGoal, InteractiveGoals, TaggedText, TaggedText_stripTags } from './rpcInterface'
+import * as Rpc from './rpcInterface'
+import { TaggedText_stripTags } from './rpcInterface'
 
-function goalToString(g: InteractiveGoal): string {
+function goalToString(g: Rpc.InteractiveGoal): string {
     let ret = ''
 
     if (g.userName) {
@@ -25,11 +26,11 @@ function goalToString(g: InteractiveGoal): string {
     return ret
 }
 
-export function goalsToString(goals: InteractiveGoals): string {
+export function goalsToString(goals: Rpc.InteractiveGoals): string {
     return goals.goals.map(goalToString).join('\n\n')
 }
 
-export function Goal({pos, goal, reverse}: {pos: DocumentPosition, goal: InteractiveGoal, reverse: boolean}) {
+export function Goal({pos, goal}: {pos: DocumentPosition, goal: Rpc.InteractiveGoal, reverse: boolean}) {
     const prefix = goal.goalPrefix ?? '⊢ '
     const hyps = reverse  ? goal.hyps.slice().reverse() : goal.hyps;
     const goalLi  = <li key={'goal'}>
@@ -50,7 +51,7 @@ export function Goal({pos, goal, reverse}: {pos: DocumentPosition, goal: Interac
     </div>
 }
 
-export function Goals({pos, goals, reverseOrder}: {pos: DocumentPosition, goals: InteractiveGoals, reverseOrder: boolean}) {
+export function Goals({pos, goals}: {pos: DocumentPosition, goals: Rpc.InteractiveGoals, reverseOrder: boolean}) {
     const config = React.useContext(ConfigContext)
     // TODO re-add?
     const reFilters = config.infoViewTacticStateFilters || []
