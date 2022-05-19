@@ -283,6 +283,7 @@ function InfoAux(props: InfoProps) {
             const [goals, termGoal] = await allReq;
             setGoals(goals);
             setTermGoal(termGoal);
+            setStatus('ready');
         } catch (err: any) {
             if (err?.code === -32801) {
                 // Document has been changed since we made the request, try again
@@ -290,8 +291,6 @@ function InfoAux(props: InfoProps) {
                 return;
             } else { onError(err); }
         }
-
-        setStatus('ready');
     });
 
     React.useEffect(() => void triggerUpdate(), [pos.uri, pos.line, pos.character, serverIsProcessing]);
