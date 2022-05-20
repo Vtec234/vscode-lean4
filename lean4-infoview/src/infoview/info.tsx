@@ -33,9 +33,9 @@ export function InfoStatusBar(props: InfoStatusBarProps) {
     const ec = React.useContext(EditorContext);
 
     const statusColTable: {[T in InfoStatus]: string} = {
-        'loading': 'gold',
-        'updating': 'gold',
-        'error': 'dark-red',
+        'loading': 'gold ',
+        'updating': 'gold ',
+        'error': 'dark-red ',
         'ready': '',
     }
     const statusColor = statusColTable[status];
@@ -43,7 +43,7 @@ export function InfoStatusBar(props: InfoStatusBarProps) {
     const isPinned = kind === 'pin';
 
     return (
-    <summary style={{transition: 'color 0.5s ease'}} className={'mv2 pointer' + statusColor}>
+    <summary style={{transition: 'color 0.5s ease'}} className={'mv2 pointer ' + statusColor}>
         {locationString}
         {isPinned && !isPaused && ' (pinned)'}
         {!isPinned && isPaused && ' (paused)'}
@@ -58,10 +58,10 @@ export function InfoStatusBar(props: InfoStatusBarProps) {
                 <a className="link pointer mh2 dim codicon codicon-go-to-file"
                    onClick={e => { e.preventDefault(); void ec.revealPosition(pos); }}
                    title="reveal file location" />}
-            <a className={'link pointer mh2 dim codicon ' + (isPinned ? 'codicon-pinned' : 'codicon-pin')}
+            <a className={'link pointer mh2 dim codicon ' + (isPinned ? 'codicon-pinned ' : 'codicon-pin ')}
                 onClick={e => { e.preventDefault(); onPin(pos); }}
                 title={isPinned ? 'unpin' : 'pin'} />
-            <a className={'link pointer mh2 dim codicon ' + (isPaused ? 'codicon-debug-continue' : 'codicon-debug-pause')}
+            <a className={'link pointer mh2 dim codicon ' + (isPaused ? 'codicon-debug-continue ' : 'codicon-debug-pause ')}
                onClick={e => { e.preventDefault(); setPaused(!isPaused); }}
                title={isPaused ? 'continue updating' : 'pause updating'} />
             <a className="link pointer mh2 dim codicon codicon-refresh"
@@ -123,7 +123,7 @@ export function InfoDisplay(props0: InfoDisplayProps) {
     const hasGoals = status !== 'error' && goals;
     const hasTermGoal = status !== 'error' && termGoal;
     const hasMessages = status !== 'error' && messages.length !== 0;
-    const filterClasses = 'link pointer mh2 dim codicon fr ' + (reverseOrder ? 'codicon-arrow-up' : 'codicon-arrow-down');
+    const filterClasses = 'link pointer mh2 dim codicon fr ' + (reverseOrder ? 'codicon-arrow-up ' : 'codicon-arrow-down ');
     const sortButton = <a className={filterClasses} onClick={e => { setReverseOrder(!reverseOrder); }} title="reverse list"/>
     return (
     <Details initiallyOpen>
@@ -132,7 +132,7 @@ export function InfoDisplay(props0: InfoDisplayProps) {
             {hasError &&
                 <div className="error">
                     Error updating: {error}.
-                    <a className="link pointer dim" onClick={e => { e.preventDefault(); void triggerDisplayUpdate(); }}>Try again.</a>
+                    <a className="link pointer dim" onClick={e => { e.preventDefault(); void triggerDisplayUpdate(); }}> Try again.</a>
                 </div>}
             <div style={{display: hasGoals ? 'block' : 'none'}}>
                 <Details initiallyOpen>
