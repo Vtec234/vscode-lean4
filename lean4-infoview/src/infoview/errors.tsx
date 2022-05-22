@@ -14,7 +14,10 @@ export class ErrorBoundary extends React.Component<{}, {error: string | undefine
   render() {
     if (this.state.error) {
       // You can render any custom fallback UI
-      return <h1>{this.state.error}</h1>;
+      return <div>
+          <h1>Error:</h1>{this.state.error}<br/>
+          <a onClick={() => this.setState({ error: undefined })}>Click to reload.</a>
+        </div>;
     }
 
     return this.props.children;
