@@ -70,7 +70,7 @@ export async function InteractiveDiagnostics_infoToInteractive(rs: RpcSessions, 
     return ret
 }
 
-export async function Lean_Widget_ppExprTagged(rs: RpcSessions, pos: DocumentPosition, expr: ExprWithCtx, explicit: boolean): Promise<FormattedCode | undefined> {
+export async function Lean_Widget_ppExprTagged(rs: RpcSessions, pos: DocumentPosition, expr: ExprWithCtx, explicit: boolean): Promise<CodeWithInfos | undefined> {
     const ret = await rs.call<CodeWithInfos>(pos, 'Lean.Widget.ppExprTagged', [expr, explicit])
     if (ret) CodeWithInfos_registerRefs(rs, pos, ret)
     return ret
