@@ -101,11 +101,9 @@ export function UserWidget(props: any) {
     const curPos: DocumentPosition = { uri: curLoc.uri, ...curLoc.range.start };
     const [status, result, error] = useAsync(() => getWidget(rs, curPos), [curPos.uri, curPos.line, curPos.character])
 
-
     const widgetId = result?.id
-    const ps = result?.props
+    const ps = { pos: curPos, ...result?.props }
     const component = result?.component
-
 
     return (
         <React.Suspense fallback={`Loading widget: ${widgetId} ${status}.`}>
