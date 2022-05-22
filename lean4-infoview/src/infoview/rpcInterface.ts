@@ -38,7 +38,7 @@ export function TaggedText_stripTags<T>(tt: TaggedText<T>): string {
     return go(tt)
 }
 
-export type InfoWithCtx = RpcPtr<'InfoWithCtx'>
+export type InfoWithCtx = RpcPtr<'Lean.Widget.InfoWithCtx'>
 
 export interface SubexprInfo {
     info: InfoWithCtx
@@ -46,7 +46,7 @@ export interface SubexprInfo {
 }
 
 export type CodeWithInfos = TaggedText<SubexprInfo>
-export type ExprWithCtx = RpcPtr<'ExprWithCtx'>
+export type ExprWithCtx = RpcPtr<'Lean.Widget.ExprWithCtx'>
 
 /** Information that should appear in a popup when clicking on a subexpression. */
 export interface InfoPopup {
@@ -67,6 +67,12 @@ function InfoPopup_registerRefs(rs: RpcSessions, pos: DocumentPosition, ip: Info
 export async function InteractiveDiagnostics_infoToInteractive(rs: RpcSessions, pos: DocumentPosition, info: InfoWithCtx): Promise<InfoPopup | undefined> {
     const ret = await rs.call<InfoPopup>(pos, 'Lean.Widget.InteractiveDiagnostics.infoToInteractive', info)
     if (ret) InfoPopup_registerRefs(rs, pos, ret)
+    return ret
+}
+
+export async function Lean_Widget_ppExprTagged(rs: RpcSessions, pos: DocumentPosition, expr: ExprWithCtx, explicit: boolean): Promise<FormattedCode | undefined> {
+    const ret = await rs.call<CodeWithInfos>(pos, 'Lean.Widget.ppExprTagged', [expr, explicit])
+    if (ret) CodeWithInfos_registerRefs(rs, pos, ret)
     return ret
 }
 
@@ -111,7 +117,7 @@ export async function getInteractiveTermGoal(rs: RpcSessions, pos: DocumentPosit
     return ret
 }
 
-export type MessageData = RpcPtr<'MessageData'>
+export type MessageData = RpcPtr<'Lean.MessageData'>
 export type MsgEmbed =
     { expr: CodeWithInfos } |
     { goal: InteractiveGoal } |
