@@ -212,3 +212,36 @@ export async function Widget_getStaticJS(rs: RpcSessions, pos: DocumentPosition,
         }
     }
 }
+
+type FVarId =  {"name" : string}
+export type GoalLocation =
+    "entire"
+    | "targetType"
+    | {hypothesisIdentifier : FVarId}
+    | {hypothesisValue : FVarId}
+    | {hypothesisType : FVarId}
+
+
+
+interface ContextualSuggestionQueryRequest {
+    pos : DocumentPosition;
+    goalIndex: number
+    goalLoc : GoalLocation
+    subexprPos : number
+}
+
+interface Suggestion {
+    display : string
+    insert : string
+    goals : InteractiveGoals
+}
+
+interface ContextualSuggestionQueryResponse{
+    completions: Suggestion[]
+}
+
+export async function Widget_queryContextualSuggestions(rs : RpcSessions, pos : DocumentPosition, args : ContextualSuggestionQueryRequest) : Promise<ContextualSuggestionQueryResponse> {
+    const ret : any = await rs.call(pos, "Lean.Widget.queryContextualSuggestions", args)
+    // [todo] have to do something with register refs here?
+    return ret
+}
