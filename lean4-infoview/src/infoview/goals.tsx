@@ -51,7 +51,13 @@ function getFilteredHypotheses(hyps: InteractiveHypothesis[], filter: GoalFilter
         (filter.isHiddenAssumption || !isHiddenAssumption(h)));
 }
 
-export function Goal({pos, goal, filter}: {pos: DocumentPosition, goal: InteractiveGoal, filter: GoalFilterState}) {
+interface GoalProps {
+    pos : DocumentPosition
+    goal : InteractiveGoal
+    filter: GoalFilterState
+}
+
+export function Goal({pos, goal, filter}: GoalProps) {
     const prefix = goal.goalPrefix ?? '⊢ '
     const filteredList = getFilteredHypotheses(goal.hyps, filter);
     const hyps = filter.reverse  ? filteredList.slice().reverse() : filteredList;
