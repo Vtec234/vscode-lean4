@@ -164,3 +164,8 @@ export async function getGoToLocation(rs: RpcSessions, pos: DocumentPosition, ki
     const args: GetGoToLocationParams = { kind, info };
     return rs.call<LocationLink[]>(pos, 'Lean.Widget.getGoToLocation', args)
 }
+
+export async function Widget_getCodeAtPoint(rs: RpcSessions, pos: DocumentPosition): Promise<string | undefined> {
+    const ret = await rs.call<string>(pos, 'Widget_getCodeAtPoint', DocumentPosition.toTdpp(pos))
+    return ret
+}
