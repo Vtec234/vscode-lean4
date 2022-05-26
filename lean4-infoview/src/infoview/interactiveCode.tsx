@@ -126,6 +126,11 @@ function InteractiveCodeTag({pos, tag: ct, fmt}: InteractiveTagProps<SubexprInfo
   )
 }
 
-export function InteractiveCode({pos, fmt}: {pos: DocumentPosition, fmt: CodeWithInfos}) {
-  return InteractiveTaggedText({pos, fmt, InnerTagUi: InteractiveCodeTag})
+interface InteractiveCodeProps {
+  pos: DocumentPosition
+  fmt: CodeWithInfos
+}
+
+export function InteractiveCode(props: InteractiveCodeProps) {
+  return InteractiveTaggedText({...props, InnerTagUi: InteractiveCodeTag})
 }
