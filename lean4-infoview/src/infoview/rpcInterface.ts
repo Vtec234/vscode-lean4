@@ -241,7 +241,13 @@ interface ContextualSuggestionQueryResponse{
 }
 
 export async function Widget_queryContextualSuggestions(rs : RpcSessions, pos : DocumentPosition, args : ContextualSuggestionQueryRequest) : Promise<ContextualSuggestionQueryResponse> {
-    const ret : any = await rs.call(pos, "Lean.Widget.queryContextualSuggestions", args)
+    const ret = await rs.call<ContextualSuggestionQueryResponse>(pos, "Lean.Widget.queryContextualSuggestions", args)
+    if (!ret) {
+        return {completions : []}
+    }
     // [todo] have to do something with register refs here?
+    for (const suggestion of ret.completions) {
+        InteractiveGoals_registerRefs(rs, pos, suggestion.goals)
+    }
     return ret
 }
