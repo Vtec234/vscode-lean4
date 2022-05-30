@@ -3,7 +3,7 @@ import type { Location } from 'vscode-languageserver-protocol';
 
 import { EditorContext, RpcContext } from './contexts';
 import { GetWidgetResponse, Widget_getStaticJS, Widget_getWidget } from './rpcInterface';
-import { DocumentPosition, useEventResult } from './util';
+import { DocumentPosition, useAsync, useEventResult } from './util';
 import { ErrorBoundary } from './errors';
 import { RpcSessions } from './rpcSessions';
 import { isRpcError, RpcErrorCode } from '@lean4/infoview-api';
@@ -32,32 +32,15 @@ const dynamicallyLoadComponent = memoize(function (hash : number, code: string, 
     })
 })
 
-type Status = 'pending' | 'fulfilled' | 'rejected'
-
-// [todo] this badly handles case where effect is being spammed because lots of in-flight promises will be updating the state without locks.
-// There is some code in the infoview that deals with this problem somewhere.
-export function useAsync<T>(fn : () => Promise<T>, deps : React.DependencyList = []) : [Status, T | undefined, Error | undefined] {
-    const [status, setStatus] = React.useState<Status>('pending')
-    const [result, setResult] = React.useState<T | undefined>(undefined)
-    const [error, setError] = React.useState<Error | undefined>(undefined)
-    React.useEffect(() => {
-        setStatus('pending')
-        setError(undefined)
-        fn().then(result => {
-            setStatus('fulfilled')
-            setResult(result)
-            setError(undefined)
-        }, (err : any) => {
-            setStatus('rejected')
-            if (isRpcError(err)) {
-                err = new Error(`Rpc error: ${RpcErrorCode[err.code]}: ${err.message}`)
-            } else if (! (err instanceof Error)) {
-                err = new Error(`Unrecognised error ${JSON.stringify(err)}`)
-            }
-            setError(err as Error)
-        })
-    }, deps)
-    return [status, result, error]
+/** Sends an exception object to a throwable error. */
+function mapRpcError(err : unknown) : Error {
+    if (isRpcError(err)) {
+        return new Error(`Rpc error: ${RpcErrorCode[err.code]}: ${err.message}`)
+    } else if (! (err instanceof Error)) {
+        return new Error(`Unrecognised error ${JSON.stringify(err)}`)
+    } else {
+        return err
+    }
 }
 
 interface GetWidgetResult {
@@ -109,7 +92,7 @@ export function UserWidget(props: any) {
         <React.Suspense fallback={`Loading widget: ${widgetId} ${status}.`}>
             <ErrorBoundary>
                 {component && <div>{React.createElement(component, ps)}</div>}
-                {error && <div>{error.message}</div>}
+                {error && <div>{mapRpcError(error).message}</div>}
             </ErrorBoundary>
         </React.Suspense>
     )
