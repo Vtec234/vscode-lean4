@@ -80,6 +80,7 @@ export interface InteractiveHypothesis {
     isInstance?: boolean,
     isType?: boolean,
     names: string[]
+    fvarIds: string[]
     type: CodeWithInfos
     val?: CodeWithInfos
 }
@@ -89,6 +90,7 @@ export interface InteractiveGoal {
     type: CodeWithInfos
     userName?: string
     goalPrefix?: string
+    mvarId?: string
 }
 
 function InteractiveGoal_registerRefs(rs: RpcSessions, pos: DocumentPosition, g: InteractiveGoal) {
@@ -103,7 +105,7 @@ export interface InteractiveGoals {
     goals: InteractiveGoal[]
 }
 
-function InteractiveGoals_registerRefs(rs: RpcSessions, pos: DocumentPosition, gs: InteractiveGoals) {
+export function InteractiveGoals_registerRefs(rs: RpcSessions, pos: DocumentPosition, gs: InteractiveGoals) {
     for (const g of gs.goals) InteractiveGoal_registerRefs(rs, pos, g)
 }
 
@@ -175,4 +177,17 @@ export async function getGoToLocation(rs: RpcSessions, pos: DocumentPosition, ki
     }
     const args: GetGoToLocationParams = { kind, info };
     return rs.call<LocationLink[]>(pos, 'Lean.Widget.getGoToLocation', args)
+}
+
+/** Sends an exception object to a throwable error.
+ * Maps JSON Rpc errors to throwable errors.
+ */
+export function mapRpcError(err : unknown) : Error {
+    if (isRpcError(err)) {
+        return new Error(`Rpc error: ${RpcErrorCode[err.code]}: ${err.message}`)
+    } else if (! (err instanceof Error)) {
+        return new Error(`Unrecognised error ${JSON.stringify(err)}`)
+    } else {
+        return err
+    }
 }

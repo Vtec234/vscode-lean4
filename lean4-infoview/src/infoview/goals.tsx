@@ -3,6 +3,7 @@ import { DocumentPosition } from './util'
 import { ConfigContext } from './contexts'
 import { InteractiveCode } from './interactiveCode'
 import { InteractiveGoal, InteractiveGoals, InteractiveHypothesis, TaggedText_stripTags } from './rpcInterface'
+import { PushLocation } from './contextualSuggestions'
 
 function goalToString(g: InteractiveGoal): string {
     let ret = ''
@@ -40,7 +41,7 @@ export interface GoalFilterState {
     isHiddenAssumption: boolean
 }
 
-function isHiddenAssumption(h: InteractiveHypothesis){
+function isHiddenAssumption(h: InteractiveHypothesis) {
     return h.names.every(n => n.indexOf('✝') >= 0);
 }
 
@@ -51,35 +52,57 @@ function getFilteredHypotheses(hyps: InteractiveHypothesis[], filter: GoalFilter
         (filter.isHiddenAssumption || !isHiddenAssumption(h)));
 }
 
-export function Goal({pos, goal, filter}: {pos: DocumentPosition, goal: InteractiveGoal, filter: GoalFilterState}) {
+interface GoalProps {
+    pos: DocumentPosition
+    goal: InteractiveGoal
+    filter: GoalFilterState
+    /** Where the goal appears in the goal list. */
+    index: number
+}
+
+export function Goal({ pos, goal, filter, index }: GoalProps) {
     const prefix = goal.goalPrefix ?? '⊢ '
     const filteredList = getFilteredHypotheses(goal.hyps, filter);
-    const hyps = filter.reverse  ? filteredList.slice().reverse() : filteredList;
-    const goalLi  = <li key={'goal'}>
-                        <strong className="goal-vdash">{prefix}</strong><InteractiveCode pos={pos} fmt={goal.type} />
-                     </li>
+    const hyps = filter.reverse ? filteredList.slice().reverse() : filteredList;
+    const goalId = goal.mvarId || index
+    const goalLi = <li key={'goal'}>
+        <strong className="goal-vdash">{prefix}</strong>
+        <PushLocation coord={[goalId, 'type']} >
+            <InteractiveCode pos={pos} fmt={goal.type} />
+        </PushLocation>
+    </li>
     return <div className="font-code tl pre-wrap">
         <ul className="list pl0">
             {goal.userName && <li key={'case'}><strong className="goal-case">case </strong>{goal.userName}</li>}
-            {filter.reverse && goalLi }
-            {hyps.map ((h, i) => {
-                const names = h.names.reduce((acc, n) => acc + ' ' + n, '').slice(1)
+            {filter.reverse && goalLi}
+            {hyps.map((h, i) => {
+                const names = h.names.map((n, i) =>
+                    <PushLocation coord={['names', i]} key={i}>
+                        <span className="mr1">{n}</span>
+                    </PushLocation>)
                 return <li key={`hyp-${i}`}>
-                    <strong className="goal-hyp">{names}</strong> : <InteractiveCode pos={pos} fmt={h.type} />{h.val && <> := <InteractiveCode pos={pos} fmt={h.val}/></>}
+                    <PushLocation coord={[goalId, 'hyps', h.fvarIds[0]]}>
+                        <strong className="goal-hyp">{names}</strong>
+                        :
+                        <InteractiveCode pos={pos} fmt={h.type} coord="type" />
+                        {h.val && <>
+                            := <InteractiveCode pos={pos} fmt={h.val} coord="val" />
+                        </>}
+                    </PushLocation>
                 </li>
             })}
-            {!filter.reverse && goalLi }
+            {!filter.reverse && goalLi}
         </ul>
     </div>
 }
 
-export function Goals({pos, goals, filter}: {pos: DocumentPosition, goals: InteractiveGoals, filter: GoalFilterState}) {
+export function Goals({ pos, goals, filter }: { pos: DocumentPosition, goals: InteractiveGoals, filter: GoalFilterState }) {
     const config = React.useContext(ConfigContext)
     if (goals.goals.length === 0) {
         return <>Goals accomplished 🎉</>
     } else {
         return <>
-            {goals.goals.map ((g, i) => <Goal key={i} pos={pos} goal={g} filter={filter}/>)}
+            {goals.goals.map((g, i) => <Goal key={g.mvarId || i} pos={pos} goal={g} filter={filter} index={i} />)}
         </>
     }
 }
