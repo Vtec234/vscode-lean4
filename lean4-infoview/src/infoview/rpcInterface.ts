@@ -80,6 +80,7 @@ export interface InteractiveHypothesis {
     isInstance?: boolean,
     isType?: boolean,
     names: string[]
+    fvarIds: string[]
     type: CodeWithInfos
     val?: CodeWithInfos
 }
@@ -89,6 +90,7 @@ export interface InteractiveGoal {
     type: CodeWithInfos
     userName?: string
     goalPrefix?: string
+    mvarId?: string
 }
 
 function InteractiveGoal_registerRefs(rs: RpcSessions, pos: DocumentPosition, g: InteractiveGoal) {
