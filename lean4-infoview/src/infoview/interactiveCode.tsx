@@ -2,8 +2,7 @@ import * as React from 'react'
 
 import { EditorContext, RpcContext } from './contexts'
 import { DocumentPosition, useAsync } from './util'
-import { DocumentPosition } from './util'
-import { SubexprInfo, CodeWithInfos, InfoPopup, InfoWithCtx, InteractiveDiagnostics_infoToInteractive, getGoToLocation, TaggedText } from './rpcInterface'
+import { SubexprInfo, CodeWithInfos, InfoPopup, InfoWithCtx, InteractiveDiagnostics_infoToInteractive, getGoToLocation, TaggedText, mapRpcError } from './rpcInterface'
 import { DetectHoverSpan, HoverState, WithTooltipOnHover } from './tooltips'
 import { Location } from 'vscode-languageserver-protocol'
 
@@ -52,16 +51,15 @@ function TypePopupContents({ pos, info, redrawTooltip }: TypePopupContentsProps)
   // We let the tooltip know to redo its layout whenever our contents change.
   React.useEffect(() => redrawTooltip(), [ip, err, redrawTooltip])
 
-  if (err)
-    return <>Error: {err}</>
-
-  if (ip) {
-    return <>
+  return <>
+    {ip && <>
       {ip.exprExplicit && <InteractiveCode pos={pos} fmt={ip.exprExplicit} />} : {ip.type && <InteractiveCode pos={pos} fmt={ip.type} />}
       {ip.doc && <hr />}
       {ip.doc && ip.doc} {/* TODO markdown */}
-    </>
-  } else return <>Loading..</>
+    </>}
+    {err && <>Error: {mapRpcError(err).message}</>}
+    {(!ip && !err) && <>Loading..</>}
+  </>
 }
 
 /** Tagged spans can be hovered over to display extra info stored in the associated `SubexprInfo`. */

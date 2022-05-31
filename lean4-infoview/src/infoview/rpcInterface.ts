@@ -251,3 +251,16 @@ export async function Widget_queryContextualSuggestions(rs : RpcSessions, pos : 
     }
     return ret
 }
+
+/** Sends an exception object to a throwable error.
+ * Maps JSON Rpc errors to throwable errors.
+ */
+export function mapRpcError(err : unknown) : Error {
+    if (isRpcError(err)) {
+        return new Error(`Rpc error: ${RpcErrorCode[err.code]}: ${err.message}`)
+    } else if (! (err instanceof Error)) {
+        return new Error(`Unrecognised error ${JSON.stringify(err)}`)
+    } else {
+        return err
+    }
+}

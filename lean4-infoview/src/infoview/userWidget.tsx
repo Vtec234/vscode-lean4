@@ -2,7 +2,7 @@ import * as React from 'react';
 import type { Location } from 'vscode-languageserver-protocol';
 
 import { EditorContext, RpcContext } from './contexts';
-import { GetWidgetResponse, Widget_getStaticJS, Widget_getWidget } from './rpcInterface';
+import { GetWidgetResponse, mapRpcError, Widget_getStaticJS, Widget_getWidget } from './rpcInterface';
 import { DocumentPosition, useAsync, useEventResult } from './util';
 import { ErrorBoundary } from './errors';
 import { RpcSessions } from './rpcSessions';
@@ -31,17 +31,6 @@ const dynamicallyLoadComponent = memoize(function (hash : number, code: string, 
         return await import(url)
     })
 })
-
-/** Sends an exception object to a throwable error. */
-function mapRpcError(err : unknown) : Error {
-    if (isRpcError(err)) {
-        return new Error(`Rpc error: ${RpcErrorCode[err.code]}: ${err.message}`)
-    } else if (! (err instanceof Error)) {
-        return new Error(`Unrecognised error ${JSON.stringify(err)}`)
-    } else {
-        return err
-    }
-}
 
 interface GetWidgetResult {
     component? : any
