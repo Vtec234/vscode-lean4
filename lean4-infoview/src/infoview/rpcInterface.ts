@@ -105,7 +105,7 @@ export interface InteractiveGoals {
     goals: InteractiveGoal[]
 }
 
-function InteractiveGoals_registerRefs(rs: RpcSessions, pos: DocumentPosition, gs: InteractiveGoals) {
+export function InteractiveGoals_registerRefs(rs: RpcSessions, pos: DocumentPosition, gs: InteractiveGoals) {
     for (const g of gs.goals) InteractiveGoal_registerRefs(rs, pos, g)
 }
 
@@ -213,45 +213,6 @@ export async function Widget_getStaticJS(rs: RpcSessions, pos: DocumentPosition,
             throw Error(`Unknown rpc error ${JSON.stringify(e)}`)
         }
     }
-}
-
-type FVarId =  {"name" : string}
-export type GoalLocation =
-    "entire"
-    | "targetType"
-    | {hypothesisIdentifier : FVarId}
-    | {hypothesisValue : FVarId}
-    | {hypothesisType : FVarId}
-
-
-
-interface ContextualSuggestionQueryRequest {
-    pos : DocumentPosition;
-    goalIndex: number
-    goalLoc : GoalLocation
-    subexprPos : number
-}
-
-interface Suggestion {
-    display : string
-    insert : string
-    goals : InteractiveGoals
-}
-
-interface ContextualSuggestionQueryResponse{
-    completions: Suggestion[]
-}
-
-export async function Widget_queryContextualSuggestions(rs : RpcSessions, pos : DocumentPosition, args : ContextualSuggestionQueryRequest) : Promise<ContextualSuggestionQueryResponse> {
-    const ret = await rs.call<ContextualSuggestionQueryResponse>(pos, "Lean.Widget.queryContextualSuggestions", args)
-    if (!ret) {
-        return {completions : []}
-    }
-    // [todo] have to do something with register refs here?
-    for (const suggestion of ret.completions) {
-        InteractiveGoals_registerRefs(rs, pos, suggestion.goals)
-    }
-    return ret
 }
 
 /** Sends an exception object to a throwable error.

@@ -5,6 +5,7 @@ import { DocumentPosition, useAsync } from './util'
 import { SubexprInfo, CodeWithInfos, InfoPopup, InfoWithCtx, InteractiveDiagnostics_infoToInteractive, getGoToLocation, TaggedText, mapRpcError } from './rpcInterface'
 import { DetectHoverSpan, HoverState, WithTooltipOnHover } from './tooltips'
 import { Location } from 'vscode-languageserver-protocol'
+import { coord, PushLocation, SuggestionsSection } from './contextualSuggestions'
 
 export interface InteractiveTextComponentProps<T> {
   pos: DocumentPosition
@@ -59,6 +60,7 @@ function TypePopupContents({ pos, info, redrawTooltip }: TypePopupContentsProps)
     </>}
     {err && <>Error: {mapRpcError(err).message}</>}
     {(!ip && !err) && <>Loading..</>}
+    <SuggestionsSection pos={pos} subexprPos={info.subexprPos} info={info.info} redrawTooltip={redrawTooltip}/>
   </>
 }
 
@@ -66,7 +68,7 @@ function TypePopupContents({ pos, info, redrawTooltip }: TypePopupContentsProps)
 function InteractiveCodeTag({pos, tag: ct, fmt}: InteractiveTagProps<SubexprInfo>) {
   const mkTooltip = React.useCallback((redrawTooltip: () => void) =>
     <div className="font-code tl pre-wrap">
-      <TypePopupContents pos={pos} info={ct.info}
+      <TypePopupContents pos={pos} info={ct}
         redrawTooltip={redrawTooltip} />
     </div>, [pos.uri, pos.line, pos.character, ct.info])
 
@@ -122,8 +124,13 @@ function InteractiveCodeTag({pos, tag: ct, fmt}: InteractiveTagProps<SubexprInfo
 interface InteractiveCodeProps {
   pos: DocumentPosition
   fmt: CodeWithInfos
+  coord?: coord
 }
 
 export function InteractiveCode(props: InteractiveCodeProps) {
-  return InteractiveTaggedText({...props, InnerTagUi: InteractiveCodeTag})
+  const r = <InteractiveTaggedText InnerTagUi={InteractiveCodeTag} fmt={props.fmt} pos={props.pos} />
+  if (props.coord !== undefined) {
+    return <PushLocation coord={props.coord}>{r}</PushLocation>
+  }
+  return r
 }
