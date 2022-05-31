@@ -184,7 +184,7 @@ export interface GetWidgetResponse {
 }
 
 export function Widget_getWidget(rs: RpcSessions, pos: DocumentPosition): Promise<GetWidgetResponse | undefined> {
-    return rs.call(pos, "Lean.Widget.getWidget", DocumentPosition.toTdpp(pos))
+    return rs.call(pos, 'Lean.Widget.getWidget', DocumentPosition.toTdpp(pos))
 }
 
 export interface StaticJS {
@@ -199,7 +199,7 @@ export interface StaticJS {
  */
 export async function Widget_getStaticJS(rs: RpcSessions, pos: DocumentPosition, widgetId: string): Promise<StaticJS | undefined> {
     try {
-        return await rs.call(pos, "Lean.Widget.getStaticJS", { "pos": DocumentPosition.toTdpp(pos), widgetId })
+        return await rs.call(pos, 'Lean.Widget.getStaticJS', { 'pos': DocumentPosition.toTdpp(pos), widgetId })
     } catch (e) {
         if (isRpcError(e)){
             if (e.code === RpcErrorCode.MethodNotFound || e.code === RpcErrorCode.InvalidParams) {

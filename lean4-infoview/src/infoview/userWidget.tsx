@@ -13,6 +13,7 @@ function memoize<T extends (...args : any[]) => any>(fn: T, keyFn: any = (x: any
     const r : any = (...args: any[]) => {
         const key = keyFn(...args)
         if (!cache.has(key)) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             const result = fn(...args)
             if (result) {
                 cache.set(key, result)
