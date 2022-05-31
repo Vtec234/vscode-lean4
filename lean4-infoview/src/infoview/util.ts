@@ -311,3 +311,13 @@ export function useAsync<T>(fn : () => Promise<T>, deps : React.DependencyList =
     }, [...deps, trig])
     return [status.current, result, error]
   }
+
+
+function intersperse<T>(items : T[], sep : T) : T[] {
+  if (items.length === 0) {return []}
+  const acc = [items[0]]
+  for (let i = 1; i < items.length; i++) {
+    acc.push(sep, items[i])
+  }
+  return acc
+}
