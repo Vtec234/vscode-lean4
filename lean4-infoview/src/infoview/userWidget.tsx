@@ -2,11 +2,47 @@ import * as React from 'react';
 import type { Location } from 'vscode-languageserver-protocol';
 
 import { EditorContext, RpcContext } from './contexts';
-import { GetWidgetResponse, Widget_getStaticJS, Widget_getWidget } from './rpcInterface';
 import { DocumentPosition, useEventResult } from './util';
 import { ErrorBoundary } from './errors';
 import { RpcSessions } from './rpcSessions';
 import { isRpcError, RpcErrorCode } from '@lean4/infoview-api';
+
+export interface GetWidgetResponse {
+    id: string
+    hash: number
+    props: any
+}
+
+export function Widget_getWidget(rs: RpcSessions, pos: DocumentPosition): Promise<GetWidgetResponse | undefined> {
+    return rs.call(pos, 'Lean.Widget.getWidget', DocumentPosition.toTdpp(pos))
+}
+
+export interface StaticJS {
+    javascript : string
+    hash : number
+}
+
+/** Gets the static JS code for a given widget.
+ *
+ * We make the assumption that either the code doesn't exist, or it exists and does not change for the lifetime of the widget.
+ * [todo] cache on widgetId, but then there needs to be some way of signalling that the widgetId's code has changed if the user edits it?
+ */
+export async function Widget_getStaticJS(rs: RpcSessions, pos: DocumentPosition, widgetId: string): Promise<StaticJS | undefined> {
+    try {
+        return await rs.call(pos, 'Lean.Widget.getStaticJS', { 'pos': DocumentPosition.toTdpp(pos), widgetId })
+    } catch (e) {
+        if (isRpcError(e)){
+            if (e.code === RpcErrorCode.MethodNotFound || e.code === RpcErrorCode.InvalidParams) {
+                return undefined
+            } else {
+                throw Error(`RPC Error: ${RpcErrorCode[e.code]}: ${e.message}`)
+            }
+        } else {
+            throw Error(`Unknown rpc error ${JSON.stringify(e)}`)
+        }
+    }
+}
+
 
 function memoize<T extends (...args : any[]) => any>(fn: T, keyFn: any = (x: any) => x) : T {
     const cache = new Map()
