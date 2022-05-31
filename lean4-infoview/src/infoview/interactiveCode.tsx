@@ -1,6 +1,7 @@
 import * as React from 'react'
 
 import { EditorContext, RpcContext } from './contexts'
+import { DocumentPosition, useAsync } from './util'
 import { DocumentPosition } from './util'
 import { SubexprInfo, CodeWithInfos, InfoPopup, InfoWithCtx, InteractiveDiagnostics_infoToInteractive, getGoToLocation, TaggedText } from './rpcInterface'
 import { DetectHoverSpan, HoverState, WithTooltipOnHover } from './tooltips'
@@ -32,27 +33,21 @@ export function InteractiveTaggedText<T>({pos, fmt, InnerTagUi}: InteractiveTagg
   else throw new Error(`malformed 'TaggedText': '${fmt}'`)
 }
 
+interface TypePopupContentsProps {
+  pos: DocumentPosition
+  info: SubexprInfo
+  redrawTooltip: () => void
+}
+
 /** Shows `explicitValue : itsType` and a docstring if there is one. */
-function TypePopupContents({pos, info, redrawTooltip}: {pos: DocumentPosition, info: InfoWithCtx, redrawTooltip: () => void}) {
+function TypePopupContents({ pos, info, redrawTooltip }: TypePopupContentsProps) {
   const rs = React.useContext(RpcContext)
   // When `err` is defined we show the error,
   // otherwise if `ip` is defined we show its contents,
   // otherwise a 'loading' message.
-  const [ip, setIp] = React.useState<InfoPopup>()
-  const [err, setErr] = React.useState<string>()
-
-  React.useEffect(() => {
-    InteractiveDiagnostics_infoToInteractive(rs, pos, info).then(val => {
-      if (val) {
-        setErr(undefined)
-        setIp(val)
-      }
-    }).catch(ex => {
-      if ('message' in ex) setErr('' + ex.message)
-      else if ('code' in ex) setErr(`RPC error (${ex.code})`)
-      else setErr(JSON.stringify(ex))
-    })
-  }, [rs, pos.uri, pos.line, pos.character, info])
+  const [_, ip, err] = useAsync(
+    () => InteractiveDiagnostics_infoToInteractive(rs, pos, info.info),
+    [rs, pos.uri, pos.line, pos.character, info.info, info.subexprPos])
 
   // We let the tooltip know to redo its layout whenever our contents change.
   React.useEffect(() => redrawTooltip(), [ip, err, redrawTooltip])
