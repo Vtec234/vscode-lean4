@@ -283,7 +283,7 @@ export function useAsync<T>(fn : () => Promise<T>, deps : React.DependencyList =
     const status = React.useRef<Status>('pending')
 
     React.useEffect(function () {
-      if (status.current == "pending" && !init.current) {
+      if (status.current === 'pending' && !init.current) {
         // A task is already in flight, rather than
         // spawning a task for each trigger of the effect,
         // we mark that the effect should be retriggered and run again

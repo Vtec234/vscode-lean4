@@ -2,7 +2,7 @@ import * as React from 'react'
 
 import { EditorContext, RpcContext } from './contexts'
 import { DocumentPosition, useAsync } from './util'
-import { InfoWithCtx, InteractiveGoals, InteractiveGoals_registerRefs, queryContextualSuggestions } from './rpcInterface'
+import { InfoWithCtx, InteractiveGoals, InteractiveGoals_registerRefs } from './rpcInterface'
 import { TextDocumentPositionParams } from 'vscode-languageserver-protocol'
 import { RpcSessions } from './rpcSessions'
 /*
@@ -17,7 +17,7 @@ API has stabilised we can convert this to a more type-safe representation.
 */
 export type coord = string | number
 function isCoord(c: unknown): c is coord {
-  return (typeof c === "string") || (typeof c === "number")
+  return (typeof c === 'string') || (typeof c === 'number')
 }
 /** Context storing where in the InteractiveGoals (or any other structure)
  * we are currently focussed. This is used to implement contextual suggesitons
@@ -69,7 +69,7 @@ interface ContextualSuggestionQueryResponse{
 }
 
 export async function  queryContextualSuggestions(rs : RpcSessions, pos : DocumentPosition, args : ContextualSuggestionQueryRequest) : Promise<ContextualSuggestionQueryResponse> {
-  const ret = await rs.call<ContextualSuggestionQueryResponse>(pos, "Lean.Widget.queryContextualSuggestions", args)
+  const ret = await rs.call<ContextualSuggestionQueryResponse>(pos, 'Lean.Widget.queryContextualSuggestions', args)
   if (!ret) {
       return {completions : []}
   }
@@ -99,13 +99,13 @@ export function SuggestionsSection(props: SuggestionsSectionProps) {
     [rs, pos.uri, pos.line, pos.character, props.info, props.subexprPos]
   )
   React.useEffect(() => props.redrawTooltip(), [suggestionStatus])
-  if (suggestionStatus == "fulfilled") {
+  if (suggestionStatus === 'fulfilled') {
     // [todo] <hr/> should be intercalated by parent component.
     return <><hr/><ol className="list pa0">
       {suggestions && suggestions.completions.map(s =>
         <li>
           <a className="link" title={s.insert} onClick={e => {
-            ec.api.insertText(s.insert, "above", DocumentPosition.toTdpp(pos))
+            void ec.api.insertText(s.insert, 'above', DocumentPosition.toTdpp(pos))
             e.preventDefault()
           }}>{s.display}</a>
         </li>)}

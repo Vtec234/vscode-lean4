@@ -67,7 +67,7 @@ export function Goal({ pos, goal, filter, index }: GoalProps) {
     const goalId = goal.mvarId || index
     const goalLi = <li key={'goal'}>
         <strong className="goal-vdash">{prefix}</strong>
-        <PushLocation coord={[goalId, "type"]} >
+        <PushLocation coord={[goalId, 'type']} >
             <InteractiveCode pos={pos} fmt={goal.type} />
         </PushLocation>
     </li>
@@ -77,11 +77,11 @@ export function Goal({ pos, goal, filter, index }: GoalProps) {
             {filter.reverse && goalLi}
             {hyps.map((h, i) => {
                 const names = h.names.map((n, i) =>
-                    <PushLocation coord={["names", i]} key={i}>
+                    <PushLocation coord={['names', i]} key={i}>
                         <span className="mr1">{n}</span>
                     </PushLocation>)
                 return <li key={`hyp-${i}`}>
-                    <PushLocation coord={[goalId, "hyps", h.fvarIds[0]]}>
+                    <PushLocation coord={[goalId, 'hyps', h.fvarIds[0]]}>
                         <strong className="goal-hyp">{names}</strong>
                         :
                         <InteractiveCode pos={pos} fmt={h.type} coord="type" />
