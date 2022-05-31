@@ -13,8 +13,23 @@ export interface GetWidgetResponse {
     props: any
 }
 
+function handleWidgetRpcError(e : unknown) : undefined {
+    if (isRpcError(e)){
+        if (e.code === RpcErrorCode.MethodNotFound || e.code === RpcErrorCode.InvalidParams) {
+            return undefined
+        } else {
+            throw Error(`RPC Error: ${RpcErrorCode[e.code]}: ${e.message}`)
+        }
+    } else if (e instanceof Error) {
+        throw e
+    } else {
+        throw Error(`Unknown rpc error ${JSON.stringify(e)}`)
+    }
+}
+
 export function Widget_getWidget(rs: RpcSessions, pos: DocumentPosition): Promise<GetWidgetResponse | undefined> {
-    return rs.call(pos, 'Lean.Widget.getWidget', DocumentPosition.toTdpp(pos))
+    return rs.call<GetWidgetResponse | undefined>(pos, 'Lean.Widget.getWidget', DocumentPosition.toTdpp(pos))
+        .catch<undefined>(handleWidgetRpcError);
 }
 
 export interface StaticJS {
@@ -31,15 +46,7 @@ export async function Widget_getStaticJS(rs: RpcSessions, pos: DocumentPosition,
     try {
         return await rs.call(pos, 'Lean.Widget.getStaticJS', { 'pos': DocumentPosition.toTdpp(pos), widgetId })
     } catch (e) {
-        if (isRpcError(e)){
-            if (e.code === RpcErrorCode.MethodNotFound || e.code === RpcErrorCode.InvalidParams) {
-                return undefined
-            } else {
-                throw Error(`RPC Error: ${RpcErrorCode[e.code]}: ${e.message}`)
-            }
-        } else {
-            throw Error(`Unknown rpc error ${JSON.stringify(e)}`)
-        }
+        return handleWidgetRpcError(e)
     }
 }
 
