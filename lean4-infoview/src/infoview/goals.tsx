@@ -5,6 +5,30 @@ import { InteractiveCode } from './interactiveCode'
 import { InteractiveGoal, InteractiveGoals, InteractiveHypothesis, InteractiveHypothesis_accessableNames, TaggedText_stripTags } from './rpcInterface'
 import { PushLocation } from './contextualSuggestions'
 
+interface HypProps {
+    pos: DocumentPosition
+    hyp: InteractiveHypothesis
+    index: number
+}
+
+export function Hyp({ pos, hyp : h, index }: HypProps) {
+    const names = InteractiveHypothesis_accessableNames(h).map((n, i) =>
+        <PushLocation coord={['names', i]} key={i}>
+            <span className="mr1">{n}</span>
+        </PushLocation>)
+    const hypKey = (h.fvarIds?.[0] ?? index)
+    return <li>
+        <PushLocation coord={[hypKey]}>
+            <strong className="goal-hyp">{names}</strong>
+            :&nbsp;
+            <InteractiveCode pos={pos} fmt={h.type} coord="type" />
+            {h.val && <>
+                := <InteractiveCode pos={pos} fmt={h.val} coord="val" />
+            </>}
+        </PushLocation>
+    </li>
+}
+
 function goalToString(g: InteractiveGoal): string {
     let ret = ''
 
@@ -60,6 +84,7 @@ interface GoalProps {
     index: number
 }
 
+
 export function Goal({ pos, goal, filter, index }: GoalProps) {
     const prefix = goal.goalPrefix ?? '⊢ '
     const filteredList = getFilteredHypotheses(goal.hyps, filter);
@@ -75,23 +100,9 @@ export function Goal({ pos, goal, filter, index }: GoalProps) {
         <ul className="list pl0">
             {goal.userName && <li key={'case'}><strong className="goal-case">case </strong>{goal.userName}</li>}
             {filter.reverse && goalLi}
-            {hyps.map((h, i) => {
-                const names = InteractiveHypothesis_accessableNames(h).map((n, i) =>
-                    <PushLocation coord={['names', i]} key={i}>
-                        <span className="mr1">{n}</span>
-                    </PushLocation>)
-                const hypKey = (h.fvarIds?.[0] ?? i)
-                return <li key={hypKey}>
-                    <PushLocation coord={[goalId, 'hyps', hypKey]}>
-                        <strong className="goal-hyp">{names}</strong>
-                        :
-                        <InteractiveCode pos={pos} fmt={h.type} coord="type" />
-                        {h.val && <>
-                            := <InteractiveCode pos={pos} fmt={h.val} coord="val" />
-                        </>}
-                    </PushLocation>
-                </li>
-            })}
+            <PushLocation coord={[goalId, 'hyps']}>
+                {hyps.map((h, i) => <Hyp pos={pos} index={i} hyp={h} key={i}/>)}
+            </PushLocation>
             {!filter.reverse && goalLi}
         </ul>
     </div>
