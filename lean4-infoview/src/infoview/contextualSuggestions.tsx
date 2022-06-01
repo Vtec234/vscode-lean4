@@ -99,12 +99,12 @@ export function SuggestionsSection(props: SuggestionsSectionProps) {
     [rs, pos.uri, pos.line, pos.character, props.info, props.subexprPos]
   )
   React.useEffect(() => props.redrawTooltip(), [suggestionStatus])
-  if (suggestionStatus === 'fulfilled') {
+  if (suggestionStatus === 'fulfilled' && suggestions && suggestions.completions.length > 0) {
     // [todo] <hr/> should be intercalated by parent component.
     return <><hr/><ol className="list pa0">
       {suggestions && suggestions.completions.map(s =>
-        <li>
-          <a className="link" title={s.insert} onClick={e => {
+        <li key={s.insert}>
+          <a className="link pointer" title={s.insert} onClick={e => {
             void ec.api.insertText(s.insert, 'above', DocumentPosition.toTdpp(pos))
             e.preventDefault()
           }}>{s.display}</a>
