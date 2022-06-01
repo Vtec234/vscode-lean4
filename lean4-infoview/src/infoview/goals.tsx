@@ -2,7 +2,7 @@ import * as React from 'react'
 import { DocumentPosition } from './util'
 import { ConfigContext } from './contexts'
 import { InteractiveCode } from './interactiveCode'
-import { InteractiveGoal, InteractiveGoals, InteractiveHypothesis, TaggedText_stripTags } from './rpcInterface'
+import { InteractiveGoal, InteractiveGoals, InteractiveHypothesis, InteractiveHypothesis_accessableNames, TaggedText_stripTags } from './rpcInterface'
 import { PushLocation } from './contextualSuggestions'
 
 function goalToString(g: InteractiveGoal): string {
@@ -13,7 +13,7 @@ function goalToString(g: InteractiveGoal): string {
     }
 
     for (const h of g.hyps) {
-        const names = h.names.join(' ')
+        const names = InteractiveHypothesis_accessableNames(h).join(' ')
         ret += `${names} : ${TaggedText_stripTags(h.type)}`
         if (h.val) {
             ret += ` := ${TaggedText_stripTags(h.val)}`
@@ -76,12 +76,13 @@ export function Goal({ pos, goal, filter, index }: GoalProps) {
             {goal.userName && <li key={'case'}><strong className="goal-case">case </strong>{goal.userName}</li>}
             {filter.reverse && goalLi}
             {hyps.map((h, i) => {
-                const names = h.names.map((n, i) =>
+                const names = InteractiveHypothesis_accessableNames(h).map((n, i) =>
                     <PushLocation coord={['names', i]} key={i}>
                         <span className="mr1">{n}</span>
                     </PushLocation>)
-                return <li key={`hyp-${i}`}>
-                    <PushLocation coord={[goalId, 'hyps', h.fvarIds[0]]}>
+                const hypKey = (h.fvarIds?.[0] ?? i)
+                return <li key={hypKey}>
+                    <PushLocation coord={[goalId, 'hyps', hypKey]}>
                         <strong className="goal-hyp">{names}</strong>
                         :
                         <InteractiveCode pos={pos} fmt={h.type} coord="type" />

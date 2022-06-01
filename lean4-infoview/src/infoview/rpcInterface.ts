@@ -80,9 +80,13 @@ export interface InteractiveHypothesis {
     isInstance?: boolean,
     isType?: boolean,
     names: string[]
-    fvarIds: string[]
+    fvarIds?: string[]
     type: CodeWithInfos
     val?: CodeWithInfos
+}
+
+export function InteractiveHypothesis_accessableNames(ih : InteractiveHypothesis) : string[] {
+    return ih.names.filter(x => !x.includes('[anonymous]'))
 }
 
 export interface InteractiveGoal {
