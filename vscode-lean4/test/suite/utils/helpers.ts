@@ -279,7 +279,11 @@ export async function restartLeanServer(client: LeanClient, retries=30, delay=10
 
     // check we have no errors.
     const actual = stateChanges.toString();
-    assert(actual === 'stopped,restarted');
+    const expected = 'stopped,restarted'
+    if (actual !== expected) {
+        console.log(`restartServer did not produce expected result: ${actual}`);
+    }
+    assert(actual === expected);
     return false;
 }
 
@@ -309,7 +313,13 @@ export async function invokeHrefCommand(html: string, selector: string) : Promis
             const query = decodeURIComponent(uri.query);
             console.log(`Opening file : ${query}`);
             const args = JSON.parse(query);
-            await vscode.commands.executeCommand(uri.path.slice(1), args);
+            let arg : string = ''
+            if (Array.isArray(args)){
+                arg = args[0]
+            } else {
+                arg = args
+            }
+            await vscode.commands.executeCommand(uri.path.slice(1), arg);
         }
     }
 
