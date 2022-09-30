@@ -66,6 +66,8 @@ export interface GoalFilterState {
     isHiddenAssumption: boolean
 }
 
+const defaultGoalFilterState = { reverse: false, isType: true, isInstance: true, isHiddenAssumption: true}
+
 function getFilteredHypotheses(hyps: InteractiveHypothesisBundle[], filter: GoalFilterState): InteractiveHypothesisBundle[] {
     return hyps.filter(h =>
         (!h.isInstance || filter.isInstance) &&
@@ -75,14 +77,15 @@ function getFilteredHypotheses(hyps: InteractiveHypothesisBundle[], filter: Goal
 
 interface GoalProps {
     goal: InteractiveGoal
-    filter: GoalFilterState
+    filter?: GoalFilterState
     /** Where the goal appears in the goal list. Or none if not present. */
     index?: number
 }
 
 
 export function Goal(props: GoalProps) {
-    const { goal, filter } = props
+    const goal = props.goal
+    const filter = props.filter ?? defaultGoalFilterState
     const prefix = goal.goalPrefix ?? '⊢ '
     const filteredList = getFilteredHypotheses(goal.hyps, filter);
     const hyps = filter.reverse ? filteredList.slice().reverse() : filteredList;
@@ -107,7 +110,7 @@ export function Goal(props: GoalProps) {
 
 interface GoalsProps {
     goals: InteractiveGoals
-    filter: GoalFilterState
+    filter?: GoalFilterState
 }
 
 export function Goals({ goals, filter }: GoalsProps) {

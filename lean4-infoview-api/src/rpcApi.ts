@@ -5,7 +5,7 @@
  * @module
  */
 
-import type { LocationLink, Position, Range, TextDocumentPositionParams } from 'vscode-languageserver-protocol'
+import type { LocationLink, Position, Range, TextDocumentPositionParams, TextEdit, WorkspaceEdit } from 'vscode-languageserver-protocol'
 import { LeanDiagnostic, RpcPtr } from './lspTypes'
 import { RpcSessionAtPos } from './rpcSessions'
 
@@ -185,4 +185,17 @@ export function Widget_getWidgetSource(rs: RpcSessionAtPos, pos: Position, hash:
         pos: Position
     }
     return rs.call<GetWidgetSourceParams, WidgetSource>('Lean.Widget.getWidgetSource', { pos, hash })
+}
+
+/** This is the response for Lean.Widget.getEditSuggestions */
+export interface EditSuggestionResponse {
+    title: string
+    description?: string
+    goalsAfter?: InteractiveGoals
+    edit: WorkspaceEdit
+    kind: string
+}
+
+export function Widget_getEditSuggestions(rs: RpcSessionAtPos, pos: TextDocumentPositionParams): Promise<EditSuggestionResponse[]> {
+    return rs.call('Lean.Widget.getEditSuggestions', pos)
 }

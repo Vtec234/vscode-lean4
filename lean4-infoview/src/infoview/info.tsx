@@ -2,14 +2,14 @@ import * as React from 'react';
 import type { Location } from 'vscode-languageserver-protocol';
 
 import { Goals as GoalsUi, Goal as GoalUi, goalsToString, GoalFilterState } from './goals';
-import { basename, DocumentPosition, RangeHelpers, useEvent, usePausableState, useClientNotificationEffect, discardMethodNotFound, mapRpcError } from './util';
+import { basename, DocumentPosition, RangeHelpers, useEvent, usePausableState, useClientNotificationEffect, discardMethodNotFound, mapRpcError, useAsync } from './util';
 import { Details } from './collapsing';
 import { ConfigContext, EditorContext, LspDiagnosticsContext, ProgressContext, VersionContext } from './contexts';
 import { lspDiagToInteractive, MessagesList } from './messages';
 import { getInteractiveGoals, getInteractiveTermGoal, InteractiveDiagnostic, InteractiveGoal,
-    InteractiveGoals, UserWidgets, Widget_getWidgets, RpcSessionAtPos, isRpcError, RpcErrorCode, getInteractiveDiagnostics } from '@leanprover/infoview-api';
+    InteractiveGoals, UserWidgets, Widget_getWidgets, RpcSessionAtPos, isRpcError, RpcErrorCode, getInteractiveDiagnostics, EditSuggestionResponse, Widget_getEditSuggestions } from '@leanprover/infoview-api';
 import { updatePlainGoals, updateTermGoal } from './goalCompat';
-import { WithTooltipOnHover } from './tooltips'
+import { DetectHoverSpan, HoverState, WithTooltipOnHover } from './tooltips'
 import { UserWidget } from './userWidget'
 import { RpcContext, useRpcSessionAtPos } from './rpcSessions';
 
@@ -80,6 +80,57 @@ export function InfoStatusBar(props: InfoStatusBarProps) {
     );
 }
 
+type HoverGoals = InteractiveGoals | undefined
+
+interface SuggestionsPanelProps {
+    pos: DocumentPosition;
+}
+
+interface SuggestionProps {
+    s : EditSuggestionResponse;
+}
+
+function Suggestion({ s }: SuggestionProps) {
+    const ec = React.useContext(EditorContext);
+    const [hoverState, setHoverState] = React.useState<HoverState>('off')
+    let cn = 'highlightable '
+    if (hoverState !== 'off') {
+        cn += 'highlight '
+    }
+    const mkTooltip = React.useCallback((redraw : () => void) => {
+        if (s.goalsAfter) {
+            return <GoalsUi goals={s.goalsAfter}/>
+        } else {
+            return <span>No info to show</span>
+        }
+    }, [s])
+    return <li className={cn}>
+        <WithTooltipOnHover
+            mkTooltipContent={mkTooltip}>
+        <DetectHoverSpan setHoverState={setHoverState}>
+            <code className="font-code pointer" onClick={() => ec.api.applyEdit(s.edit)}>{s.title}</code>
+        </DetectHoverSpan>
+        </WithTooltipOnHover>
+    </li>
+}
+
+export function SuggestionsPanel(props: SuggestionsPanelProps) {
+    const rs = React.useContext(RpcContext)
+    const { pos } = props;
+    const r = useAsync(() => Widget_getEditSuggestions(rs, DocumentPosition.toTdpp(pos)), [pos.uri, pos.character, pos.line])
+    const items = (r.state === 'resolved' && r.value) || [];
+    return <div style={{ display: (items.length > 0) ? 'block' : 'none' }} key="messages">
+        <Details initiallyOpen>
+            <summary className="mv2 pointer">
+                Suggestions:
+            </summary>
+            <ul className="ml1 list pl0">
+                {items.map(x => <Suggestion key={x.title} s={x}/>)}
+            </ul>
+        </Details>
+    </div>
+}
+
 interface InfoDisplayProps {
     pos: DocumentPosition;
     status: InfoStatus;
@@ -109,6 +160,7 @@ export function InfoDisplay(props0: InfoDisplayProps & InfoPinnable) {
         { reverse: false, isType: true, isInstance: true, isHiddenAssumption: true});
 
     const {kind, pos, messages, goals, termGoal, error, userWidgets, rpcSess} = props;
+    const [hoverGoals, setHoverGoals] = React.useState<HoverGoals>(undefined)
 
     const ec = React.useContext(EditorContext);
     let copyGoalToComment: (() => void) | undefined
@@ -187,10 +239,10 @@ export function InfoDisplay(props0: InfoDisplayProps & InfoPinnable) {
             <div style={{display: hasGoals ? 'block' : 'none'}} key="goals">
                 <Details initiallyOpen>
                     <summary className="mv2 pointer">
-                        Tactic state {sortButton} {filterButton}
+                        Tactic state {sortButton} {filterButton} {hoverGoals && '(after suggested tactic)'}
                     </summary>
                     <div className='ml1'>
-                        {hasGoals && <GoalsUi goals={goals} filter={goalFilters} />}
+                        {hasGoals && <GoalsUi goals={hoverGoals ?? goals} filter={goalFilters} />}
                     </div>
                 </Details>
             </div>
@@ -227,6 +279,7 @@ export function InfoDisplay(props0: InfoDisplayProps & InfoPinnable) {
                     </div>
                 </Details>
             </div>
+            <SuggestionsPanel pos={pos}/>
             {nothingToShow && (
                 isPaused ?
                     /* Adding {' '} to manage string literals properly: https://reactjs.org/docs/jsx-in-depth.html#string-literals-1 */
