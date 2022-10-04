@@ -215,14 +215,7 @@ export class InfoProvider implements Disposable {
             await this.handleInsertText(text, kind, uri, pos);
         },
         applyEdit: async (e : ls.WorkspaceEdit) => {
-            const we = new WorkspaceEdit()
-            // TODO(ed): how to convert json workspace edit to WorkspaceEdit?
-            if (e.documentChanges) {
-                for (const dc of e.documentChanges) {
-                    const x = dc as any
-                    we.set(Uri.parse(x.textDocument.uri), x.edits)
-                }
-            }
+            const we = await p2cConverter.asWorkspaceEdit(e)
             await workspace.applyEdit(we);
         },
         showDocument: async (show) => {
