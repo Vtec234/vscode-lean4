@@ -10,7 +10,7 @@
   },
   "exports": {
     ".": "./dist/index.development.js",
-    "./loader": "./dist/loader.production.min.js",
+    "./loader": "./dist/loader.development.js",
     "./package.json": "./package.json"
   },
   "typesVersions": {
